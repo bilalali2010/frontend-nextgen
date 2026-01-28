@@ -1,31 +1,23 @@
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL!;
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL!;
 
-export async function uploadPDF(files: File[]) {
-  const formData = new FormData();
-  files.forEach(file => formData.append("files", file));
-
-  const res = await fetch(`${BACKEND}/upload`, {
+export async function sendMessage(message: string) {
+  const res = await fetch(`${BASE_URL}/chat`, {
     method: "POST",
-    body: formData
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
   });
-
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
 
   return res.json();
 }
 
-export async function chatWithAI(message: string) {
-  const res = await fetch(`${BACKEND}/chat`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message })
-  });
+export async function uploadFile(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
 
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
+  const res = await fetch(`${BASE_URL}/upload`, {
+    method: "POST",
+    body: formData,
+  });
 
   return res.json();
 }
