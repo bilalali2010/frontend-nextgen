@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "lib": ["dom", "esnext"],
-    "strict": true,
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "strict": false,
     "noEmit": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "jsx": "preserve"
   }
 }
