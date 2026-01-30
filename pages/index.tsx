@@ -1,61 +1,80 @@
-import { useState } from "react";
-import { chat, uploadPDFs } from "../lib/api";
+import { useState, useEffect } from 'react';
+import { sendMessage, uploadTexts } from '../lib/api';
 
 export default function Home() {
-  const [message, setMessage] = useState("");
-  const [reply, setReply] = useState("");
-  const [admin, setAdmin] = useState(window.location.search.includes("admin=1"));
-  const [pdfUrls, setPdfUrls] = useState("");
+  const [message, setMessage] = useState('');
+  const [chat, setChat] = useState<{ user: string; bot: string }[]>([]);
+  const [pdfText, setPdfText] = useState('');
+  const [adminMode, setAdminMode] = useState(false);
 
-  const handleChat = async () => {
-    const res = await chat(message);
-    setReply(res.reply);
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin') === '1') setAdminMode(true);
+  }, []);
+
+  const handleChatSubmit = async () => {
+    if (!message) return;
+    const res = await sendMessage(message);
+    setChat([...chat, { user: message, bot: res.reply || 'No reply' }]);
+    setMessage('');
   };
 
-  const handlePDFUpload = async () => {
-    const urls = pdfUrls.split("\n").map(u => u.trim());
-    const res = await uploadPDFs(urls);
-    alert(res.status);
+  const handleTextUpload = async () => {
+    if (!pdfText) return;
+    const texts = pdfText
+      .split('\n\n')
+      .map(t => t.trim())
+      .filter(Boolean);
+    const res = await uploadTexts(texts);
+    alert(res.status || 'Uploaded');
+    setPdfText('');
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">NEXTGEN Chatbot</h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-4">NEXTGEN Chatbot</h1>
 
-      {admin && (
-        <div className="my-4">
-          <h2 className="font-semibold">Admin PDF Upload</h2>
+      {adminMode && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-2">Admin Dashboard</h2>
           <textarea
-            rows={5}
-            value={pdfUrls}
-            onChange={e => setPdfUrls(e.target.value)}
-            placeholder="Paste GitHub raw PDF URLs, one per line"
-            className="border p-2 w-full"
+            className="w-full h-48 p-2 border border-gray-400 rounded mb-2"
+            value={pdfText}
+            onChange={e => setPdfText(e.target.value)}
+            placeholder="Paste text from PDF or .txt file here..."
           />
-          <button onClick={handlePDFUpload} className="mt-2 p-2 bg-blue-600 text-white">
-            Upload PDFs
+          <button
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+            onClick={handleTextUpload}
+          >
+            Upload Text
           </button>
         </div>
       )}
 
-      <div className="my-4">
+      <div className="mb-4">
         <input
-          type="text"
+          className="w-full p-2 border border-gray-400 rounded"
           value={message}
           onChange={e => setMessage(e.target.value)}
-          placeholder="Ask NEXTGEN..."
-          className="border p-2 w-full"
+          placeholder="Ask NEXTGEN anything..."
         />
-        <button onClick={handleChat} className="mt-2 p-2 bg-green-600 text-white">
+        <button
+          className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
+          onClick={handleChatSubmit}
+        >
           Send
         </button>
       </div>
 
-      {reply && (
-        <div className="mt-4 p-2 border bg-gray-100">
-          <strong>Reply:</strong> {reply}
-        </div>
-      )}
+      <div className="space-y-4">
+        {chat.map((c, idx) => (
+          <div key={idx}>
+            <p className="font-semibold">You: {c.user}</p>
+            <p className="bg-gray-200 p-2 rounded">Bot: {c.bot}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
